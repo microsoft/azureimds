@@ -11,8 +11,7 @@ function JsonQueryIMDS(path, callback)
     http.get({
         host: imds_server,
         path: '/metadata' + path + '?api-version=' + api_version,
-        headers: {'Metadata': 'True'},
-        method: 'GET'
+        headers: {'Metadata': 'True'}
     }, function(response) {
         var statusCode = response.statusCode;
         if (statusCode != 200)
