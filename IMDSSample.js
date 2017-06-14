@@ -1,3 +1,5 @@
+// NodeJS Sample for IMDS
+
 var http = require('http');
 
 function JsonQueryIMDS(path, callback) 
