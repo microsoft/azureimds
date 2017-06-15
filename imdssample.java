@@ -4,6 +4,8 @@ import java.net.*;
 public class imdssample {
 
    public static String sendGet() throws Exception {
+	
+	//imds url   
 	String imdsUrl= "http://169.254.169.254/metadata/instance?api-version=2017-04-02";
 		
 	URL url = new URL(imdsUrl);
