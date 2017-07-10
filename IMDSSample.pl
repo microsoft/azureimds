@@ -2,12 +2,17 @@
 
 use strict;
 use warnings;
-use LWP::UserAgent;
-use JSON;
 
-my @header = ('Metadata' => 'True');
-my $browser = LWP::UserAgent->new();   
-my $response = $browser->get('http://169.254.169.254/metadata/instance?api-version=2017-04-02', @header);  # call HTTP get
-my $resStr = $response->content;
-my $json = JSON->new;
-print $json->pretty->encode($json->decode($resStr));
+use HTTP::Tiny;
+use JSON;
+use Data::Dumper;
+
+my $md_url = 'http://169.254.169.254/metadata/instance?api-version=2017-04-02';
+my $headers = { Metadata => 'true' };
+
+my $response = HTTP::Tiny->new->get($md_url, { headers => $headers });
+my $info = decode_json($response->{ content });
+
+print Dumper($info);
+
+print Dumper($info->{ compute }->{ vmId });
