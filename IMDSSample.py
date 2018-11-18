@@ -1,16 +1,10 @@
 #!/usr/bin/env python3
 import json
-import urllib.request
-import sys
+import requests
 
+endpoint = "http://169.254.169.254/metadata/instance?api-version=2017-08-01"
+headers={'Metadata': 'True'}
 
-mdUrl = "http://169.254.169.254/metadata/instance?api-version=2017-04-02"
-header={'Metadata': 'True'}
-request = urllib.request.Request(url=mdUrl, headers=header) 
-response = urllib.request.urlopen(request)
-data = response.read()
-dataStr = data.decode("utf-8")
+json_obj = requests.get(endpoint, headers=headers).json()
 
-jsonObj = json.loads(dataStr)
-
-print(json.dumps(jsonObj, sort_keys=True, indent=4, separators=(',', ': ')))
+print(json.dumps(json_obj, sort_keys=True, indent=4, separators=(',', ': ')))
