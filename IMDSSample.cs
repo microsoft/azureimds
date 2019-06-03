@@ -24,8 +24,6 @@ namespace Samples
             // Make Attested call and parse the response
             result = QueryAttestedEndpoint();
             ParseAttestedResponse(result);
-
-            string tmp = Console.ReadLine();
         }
 
         private static void ParseAttestedResponse(string response)
