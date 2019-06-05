@@ -29,6 +29,7 @@ namespace Samples
 
         private static void ParseAttestedResponse(string response)
         {
+            Console.WriteLine("Parsing Attested response");
             AttestedDocument document = SerializeObjectFromJsonString(typeof(AttestedDocument), response) as AttestedDocument;
             ValidateCertificate(document);
             ValidateAttestedData(document);
@@ -99,7 +100,7 @@ namespace Samples
         private static string QueryAttestedEndpoint()
         {
             string nonce = "nonce=" + NonceValue;
-            return QueryImds(AttestedEndpoint, "2018-10-01", nonce);
+            return QueryImds(AttestedEndpoint, "2019-04-30", nonce);
         }
 
         // Query IMDS server and retrieve JSON result
