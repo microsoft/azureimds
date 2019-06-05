@@ -14,6 +14,7 @@ namespace Samples
         const string ImdsServer = "http://169.254.169.254";
         const string InstanceEndpoint = ImdsServer + "/metadata/instance";
         const string AttestedEndpoint = ImdsServer + "/metadata/attested/document";
+        const string NonceValue = "123456";
 
         static void Main(string[] args)
         {
@@ -28,10 +29,16 @@ namespace Samples
 
         private static void ParseAttestedResponse(string response)
         {
+            AttestedDocument document = SerializeObjectFromJsonString(typeof(AttestedDocument), response) as AttestedDocument;
+            ValidateCertificate(document);
+            ValidateAttestedData(document);
+        }
+
+        private static void ValidateCertificate(AttestedDocument document)
+        {
             try
             {
                 // Build certificate from response
-                AttestedDocument document = SerializeObjectFromJsonString(typeof(AttestedDocument), response) as AttestedDocument;
                 X509Certificate2 cert = new X509Certificate2(System.Text.Encoding.UTF8.GetBytes(document.Signature));
                 // Build certificate chain
                 X509Chain chain = new X509Chain();
@@ -54,6 +61,27 @@ namespace Samples
             }
         }
 
+        private static void ValidateAttestedData(AttestedDocument document)
+        {
+            try
+            {
+                byte[] blob = Convert.FromBase64String(document.Signature);
+                SignedCms signedCms = new SignedCms();
+                signedCms.Decode(blob);
+                string result = System.Text.Encoding.UTF8.GetString(signedCms.ContentInfo.Content);
+                Console.WriteLine("Attested data: {0}", result);
+                AttestedData data = SerializeObjectFromJsonString(typeof(AttestedData), result) as AttestedData;
+                if(data.Nonce.Equals(NonceValue))
+                {
+                    Console.WriteLine("Nonce values match");
+                }
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine("Error checking signature blob: '{0}'", ex.Message);
+            }
+        }
+
         private static void ParseInstanceResponse(string response)
         {
             // Display raw json
@@ -70,13 +98,23 @@ namespace Samples
 
         private static string QueryAttestedEndpoint()
         {
-            return QueryImds(AttestedEndpoint, "2018-10-01");
+            string nonce = "nonce=" + NonceValue;
+            return QueryImds(AttestedEndpoint, "2018-10-01", nonce);
         }
 
         // Query IMDS server and retrieve JSON result
         private static string QueryImds(string path, string apiVersion)
         {
+            return QueryImds(path, apiVersion, "");
+        }
+
+        private static string QueryImds(string path, string apiVersion, string otherParams)
+        {
             string imdsUri = path + "?api-version=" + apiVersion;
+            if(otherParams != null && !otherParams.Equals(string.Empty))
+            {
+                imdsUri += "&" + otherParams;
+            }
             string jsonResult = string.Empty;
             using(var httpClient = new HttpClient())
             {
@@ -97,7 +135,7 @@ namespace Samples
         private static object SerializeObjectFromJsonString(Type objectType, string json)
         {
             DataContractJsonSerializer jsonSerializer = new DataContractJsonSerializer(objectType);
-            using (MemoryStream memoryStream = new MemoryStream())
+            using(MemoryStream memoryStream = new MemoryStream())
             {
                 // Prepare stream
                 System.IO.StreamWriter writer = new StreamWriter(memoryStream);
@@ -118,5 +156,47 @@ namespace Samples
 
         [DataMember(Name = "signature")]
         public string Signature { get; set; }
+    }
+
+    [DataContract]
+    public class AttestedData
+    {
+        [DataMember(Name = "nonce")]
+        public string Nonce { get; set; }
+
+        [DataMember(Name = "vmId")]
+        public string VmId { get; set; }
+
+        [DataMember(Name = "subscriptionId")]
+        public string SubscriptionId { get; set; }
+
+        [DataMember(Name = "plan")]
+        public AttestedDataPlanInfo PlanInfo;
+
+        [DataMember(Name = "timeStamp")]
+        public AttestedDataTimeStamp TimeStamp;
+    }
+
+    [DataContract]
+    public class AttestedDataPlanInfo
+    {
+        [DataMember(Name = "name")]
+        public string Name { get; set; }
+
+        [DataMember(Name = "product")]
+        public string Product { get; set; }
+
+        [DataMember(Name = "publisher")]
+        public string Publisher { get; set; }
+    }
+
+    [DataContract]
+    public class AttestedDataTimeStamp
+    {
+        [DataMember(Name = "createdOn")]
+        public string CreatedDate { get; set; }
+
+        [DataMember(Name = "expiresOn")]
+        public string ExpiryDate { get; set; }
     }
 }
