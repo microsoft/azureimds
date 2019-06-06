@@ -87,9 +87,6 @@ namespace Samples
         {
             // Display raw json
             Console.WriteLine("Instance response: {0}{1}", response, Environment.NewLine);
-
-            // TODO Parse json result
-            // ...
         }
 
         private static string QueryInstanceEndpoint()
