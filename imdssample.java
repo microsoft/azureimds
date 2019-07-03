@@ -89,6 +89,7 @@ public class IMDSSample
             {
                 System.out.println("Nonce values match");
             }
+			// You should also verify the plan and subscription information
         }
         catch(Exception ex)
         {
