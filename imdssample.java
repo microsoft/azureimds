@@ -98,7 +98,7 @@ public class IMDSSample
     
     private static String QueryInstanceEndpoint()
     {
-        return QueryImds(InstanceEndpoint, "2017-04-02");       
+        return QueryImds(InstanceEndpoint, "2019-04-30");       
     }
     
     private static String QueryAttestedEndpoint()
