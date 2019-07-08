@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-from Crypto.Cipher import AES
-from pkcs7 import PKCS7Encoder
 
 import base64
 import json
+import subprocess
+
 import requests
 
 imds_server_base_url = "http://169.254.169.254"
@@ -31,18 +31,29 @@ def main():
     print("Attested provider data:")
     attested_signature = attested_json['signature']
     validate_attested_data(attested_signature)
+    validate_attested_cert(attested_signature)
 
-def parse_attested_data(attested_signature):
+# Base-64 decode the string
+def decode_attested_data(attested_signature):
     decoded_string = base64.b64decode(attested_signature).decode('utf-8', 'replace')
     return decoded_string
 
 def pretty_print_json_obj_to_terminal(json_obj):
     print(json.dumps(json_obj, sort_keys=True, indent=4, separators=(',', ': ')))
 
+# Build the cert chain for validation
+def validate_attested_cert(attested_signature):
+    # Dump PKCS7, base64 encoded signature to file.
+    file = open("signature", "w")
+    file.write(attested_signature)
+    file.close()
+    # Verify the signature using a Bash script that invokes OpenSSL (PyOpenSSL is missing a lot of these commands)
+    subprocess.call("./VerifySignature.sh", shell=True)
+
 # Ensure the nonce in the response is the same as the one we supplied
 def validate_attested_data(attested_signature):
-    parsed_attested_data = parse_attested_data(attested_signature)
-    if attested_nonce in parsed_attested_data:
+    decoded_attested_data = decode_attested_data(attested_signature)
+    if attested_nonce in decoded_attested_data:
         print("Nonce values match")
 
 if __name__ == "__main__":
