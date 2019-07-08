@@ -2,7 +2,7 @@
 import json
 import requests
 
-endpoint = "http://169.254.169.254/metadata/instance?api-version=2017-08-01"
+endpoint = "http://169.254.169.254/metadata/instance?api-version=2019-04-30"
 headers={'Metadata': 'True'}
 
 json_obj = requests.get(endpoint, headers=headers).json()
