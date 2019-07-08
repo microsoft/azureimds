@@ -5,7 +5,7 @@ $NonceValue = "123456"
 
 function Query-InstanceEndpoint
 {
-    $uri = $InstanceEndpoint + "?api-version=2018-10-01"
+    $uri = $InstanceEndpoint + "?api-version=2019-04-30"
     $result = Invoke-RestMethod -Method GET -Uri $uri -Headers @{"Metadata"="True"}
     return $result
 }
