@@ -47,7 +47,7 @@ def validate_attested_cert(attested_signature):
     file = open("signature", "w")
     file.write(attested_signature)
     file.close()
-    # Verify the signature using a Bash script that invokes OpenSSL (PyOpenSSL is missing a lot of these commands)
+    # We use the subprocess module to call OpenSSL for cert manipulation as PyOpenSSL is missing a lot of these commands.
     subprocess.call("./VerifySignature.sh", shell=True)
 
 # Ensure the nonce in the response is the same as the one we supplied
