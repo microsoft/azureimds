@@ -8,10 +8,10 @@ import requests
 
 imds_server_base_url = "http://169.254.169.254"
 
-instance_api_version = "2017-08-01"
+instance_api_version = "2019-03-11"
 instance_endpoint = imds_server_base_url + "/metadata/instance?api-version=" + instance_api_version
 
-attested_api_version = "2019-04-30"
+attested_api_version = "2019-03-11"
 attested_nonce = "1234576"
 attested_endpoint = imds_server_base_url + "/metadata/attested/document?api-version=" + attested_api_version + "&nonce=" + attested_nonce
 
@@ -28,7 +28,7 @@ def main():
 
     # Attested provider API call
     attested_json = api_call(attested_endpoint)
-    print("Attested provider data:")
+    print("Attested provider validation:")
     attested_signature = attested_json['signature']
     validate_attested_data(attested_signature)
     validate_attested_cert(attested_signature)
@@ -47,7 +47,7 @@ def validate_attested_cert(attested_signature):
     file = open("signature", "w")
     file.write(attested_signature)
     file.close()
-
+    print("Cert chain validation.")
     # We use the subprocess module to call OpenSSL for cert manipulation as PyOpenSSL is missing implementations of these commands.
     # First, we base64 decode the signature using the OpenSSL decoder, which works better with subsequent OpenSSL commands than the Python base64 decoder.
     subprocess.call("openssl enc -base64 -d < signature > decoded_signature", shell=True)
@@ -59,11 +59,11 @@ def validate_attested_cert(attested_signature):
     # We, finally, verify the complete cert chain.
     subprocess.call("openssl verify -verbose -CAfile /etc/ssl/certs/Baltimore_CyberTrust_Root.pem -untrusted intermediate.pem signer.pem", shell=True)
 
-# Ensure the nonce in the response is the same as the one we supplied
+# Ensure the nonce in the response is the same as the one we supplied. Use similar logic to validate other information such as subscriptionId.
 def validate_attested_data(attested_signature):
     decoded_attested_data = decode_attested_data(attested_signature)
     if attested_nonce in decoded_attested_data:
-        print("Nonce values match")
+        print("Nonce values match.")
 
 if __name__ == "__main__":
     main()
