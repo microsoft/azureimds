@@ -47,8 +47,17 @@ def validate_attested_cert(attested_signature):
     file = open("signature", "w")
     file.write(attested_signature)
     file.close()
-    # We use the subprocess module to call OpenSSL for cert manipulation as PyOpenSSL is missing a lot of these commands.
-    subprocess.call("./VerifySignature.sh", shell=True)
+
+    # We use the subprocess module to call OpenSSL for cert manipulation as PyOpenSSL is missing implementations of these commands.
+    # First, we base64 decode the signature using the OpenSSL decoder, which works better with subsequent OpenSSL commands than the Python base64 decoder.
+    subprocess.call("openssl enc -base64 -d < signature > decoded_signature", shell=True)
+    # We obtain information about the signer from the decoded signature. 
+    subprocess.call("openssl pkcs7 -in decodedsignature -inform DER  -print_certs -out signer.pem", shell=True)
+    # We parse out the intermediate cert.
+    subprocess.call("wget -q -O intermediate.cer \"$(openssl x509 -in signer.pem -text -noout | grep \" CA Issuers -\" | awk -FURI: '{print $2}')\"", shell=True)
+    subprocess.call("openssl x509 -inform der -in intermediate.cer -out intermediate.pem", shell=True)
+    # We, finally, verify the complete cert chain.
+    subprocess.call("openssl verify -verbose -CAfile /etc/ssl/certs/Baltimore_CyberTrust_Root.pem -untrusted intermediate.pem signer.pem", shell=True)
 
 # Ensure the nonce in the response is the same as the one we supplied
 def validate_attested_data(attested_signature):
