@@ -2,6 +2,7 @@
 
 import base64
 import json
+import re
 import subprocess
 
 import requests
@@ -33,6 +34,12 @@ def main():
     validate_attested_data(attested_signature)
     validate_attested_cert(attested_signature)
 
+def find_phrase_in_file(filename, phrase):
+    file = open(filename, "r")
+    for line in file:
+        if re.search(phrase, line):
+           return line
+
 # Base-64 decode the string
 def decode_attested_data(attested_signature):
     decoded_string = base64.b64decode(attested_signature).decode('utf-8', 'replace')
@@ -53,8 +60,10 @@ def validate_attested_cert(attested_signature):
     subprocess.call("openssl enc -base64 -d < signature > decoded_signature", shell=True)
     # We obtain information about the signer from the decoded signature. 
     subprocess.call("openssl pkcs7 -in decodedsignature -inform DER  -print_certs -out signer.pem", shell=True)
-    # We parse out the intermediate cert.
-    subprocess.call("wget -q -O intermediate.cer \"$(openssl x509 -in signer.pem -text -noout | grep \" CA Issuers -\" | awk -FURI: '{print $2}')\"", shell=True)
+    # We parse out the intermediate cert URL; then, we download the intermediate cert for verification.
+    subprocess.call("openssl x509 -in signer.pem -text -noout > cert_info", shell=True)
+    intermediate_cert_string = find_phrase_in_file("cert_info", "CA Issuers").split("URI:", 1)[1]
+    subprocess.call("wget -q -O intermediate.cer " + intermediate_cert_string, shell=True)
     subprocess.call("openssl x509 -inform der -in intermediate.cer -out intermediate.pem", shell=True)
     # We, finally, verify the complete cert chain.
     subprocess.call("openssl verify -verbose -CAfile /etc/ssl/certs/Baltimore_CyberTrust_Root.pem -untrusted intermediate.pem signer.pem", shell=True)
