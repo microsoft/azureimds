@@ -62,8 +62,10 @@ def validate_attested_cert(attested_signature):
     subprocess.call("openssl pkcs7 -in decodedsignature -inform DER  -print_certs -out signer.pem", shell=True)
     # We parse out the intermediate cert URL; then, we download the intermediate cert for verification.
     subprocess.call("openssl x509 -in signer.pem -text -noout > cert_info", shell=True)
-    intermediate_cert_string = find_phrase_in_file("cert_info", "CA Issuers").split("URI:", 1)[1]
-    subprocess.call("wget -q -O intermediate.cer " + intermediate_cert_string, shell=True)
+    intermediate_cert_url = find_phrase_in_file("cert_info", "CA Issuers").split("URI:", 1)[1]
+    r = requests.get(intermediate_cert_url)
+    with open('intermediate.cer', 'wb') as f:
+        f.write(r.content)
     subprocess.call("openssl x509 -inform der -in intermediate.cer -out intermediate.pem", shell=True)
     # We, finally, verify the complete cert chain.
     subprocess.call("openssl verify -verbose -CAfile /etc/ssl/certs/Baltimore_CyberTrust_Root.pem -untrusted intermediate.pem signer.pem", shell=True)
