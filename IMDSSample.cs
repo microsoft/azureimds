@@ -91,13 +91,13 @@ namespace Samples
 
         private static string QueryInstanceEndpoint()
         {
-            return QueryImds(InstanceEndpoint, "2019-04-30");
+            return QueryImds(InstanceEndpoint, "2019-03-11");
         }
 
         private static string QueryAttestedEndpoint()
         {
             string nonce = "nonce=" + NonceValue;
-            return QueryImds(AttestedEndpoint, "2019-04-30", nonce);
+            return QueryImds(AttestedEndpoint, "2019-03-11", nonce);
         }
 
         // Query IMDS server and retrieve JSON result

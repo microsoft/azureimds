@@ -99,13 +99,13 @@ public class IMDSSample
     
     private static String QueryInstanceEndpoint()
     {
-        return QueryImds(InstanceEndpoint, "2019-04-30");       
+        return QueryImds(InstanceEndpoint, "2019-03-11");       
     }
     
     private static String QueryAttestedEndpoint()
     {
         String nonce = "nonce=" + NonceValue;
-        return QueryImds(AttestedEndpoint, "2019-04-30", nonce);
+        return QueryImds(AttestedEndpoint, "2019-03-11", nonce);
     }
     
     private static String QueryImds(String path, String apiVersion)

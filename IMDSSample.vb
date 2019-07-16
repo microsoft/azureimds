@@ -5,7 +5,7 @@ Imports Newtonsoft.Json
 Module Module1
 
     Sub Main()
-        Dim request As HttpWebRequest = WebRequest.Create("http://169.254.169.254/metadata/instance?api-version=2019-04-30")
+        Dim request As HttpWebRequest = WebRequest.Create("http://169.254.169.254/metadata/instance?api-version=2019-03-11")
         request.Headers.Add("Metadata: True")
         Dim response As HttpWebResponse = request.GetResponse()
         Dim dataStream As Stream = response.GetResponseStream()
