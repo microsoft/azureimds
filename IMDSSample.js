@@ -4,7 +4,7 @@ var http = require('http');
 
 function JsonQueryIMDS(path, callback) 
 {
-    api_version = '2019-04-30';
+    api_version = '2019-03-11';
     imds_server = '169.254.169.254';
 
     result = ''  
