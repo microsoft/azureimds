@@ -173,7 +173,7 @@ void GetMetadata(LPCWSTR serverName, WORD port, LPCWSTR url)
 
 int wmain(int argc, PCWSTR argv[])
 {
-    GetMetadata(L"169.254.169.254", 80, L"metadata/instance?api-version=2017-04-02");
+    GetMetadata(L"169.254.169.254", 80, L"metadata/instance?api-version=2019-03-11");
 
     return 0;
 }
