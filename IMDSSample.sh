@@ -1,5 +1,5 @@
 sudo apt-get install curl
-sudo apt-get jq
+sudo apt-get install jq
 # Instance call
 curl -H Metadata:True "http://169.254.169.254/metadata/instance?api-version=2019-03-11&format=json" | jq .
 # Make Attested call and extract signature
