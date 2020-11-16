@@ -57,9 +57,9 @@ def validate_attested_cert(attested_signature):
     print("Cert chain validation.")
     # We use the subprocess module to call OpenSSL for cert manipulation as PyOpenSSL is missing implementations of these commands.
     # First, we base64 decode the signature using the OpenSSL decoder, which works better with subsequent OpenSSL commands than the Python base64 decoder.
-    subprocess.call("openssl enc -base64 -d < signature > decoded_signature", shell=True)
-    # We obtain information about the signer from the decoded signature. 
-    subprocess.call("openssl pkcs7 -in decodedsignature -inform DER  -print_certs -out signer.pem", shell=True)
+    subprocess.call("openssl enc -base64 -d -A < signature > decoded_signature", shell=True)
+    # We obtain information about the signer from the decoded signature.
+    subprocess.call("openssl pkcs7 -in decoded_signature -inform DER  -print_certs -out signer.pem", shell=True)
     # We parse out the intermediate cert URL; then, we download the intermediate cert for verification.
     subprocess.call("openssl x509 -in signer.pem -text -noout > cert_info", shell=True)
     intermediate_cert_url = find_phrase_in_file("cert_info", "CA Issuers").split("URI:", 1)[1]
