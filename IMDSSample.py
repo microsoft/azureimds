@@ -16,9 +16,14 @@ attested_api_version = "2019-03-11"
 attested_nonce = "1234576"
 attested_endpoint = imds_server_base_url + "/metadata/attested/document?api-version=" + attested_api_version + "&nonce=" + attested_nonce
 
+proxies = {
+    "http": None,
+    "https": None
+}
+
 def api_call(endpoint):
     headers={'Metadata': 'True'}
-    json_obj = requests.get(endpoint, headers=headers).json()
+    json_obj = requests.get(endpoint, headers=headers, proxies=proxies).json()
     return json_obj
 
 def main():

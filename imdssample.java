@@ -127,6 +127,7 @@ public class IMDSSample
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
             con.setRequestMethod("GET");
             con.setRequestProperty("Metadata", "True");
+            con.set
             BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
             String line;
             StringBuffer response = new StringBuffer();

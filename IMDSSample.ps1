@@ -6,14 +6,14 @@ $NonceValue = "123456"
 function Query-InstanceEndpoint
 {
     $uri = $InstanceEndpoint + "?api-version=2019-03-11"
-    $result = Invoke-RestMethod -Method GET -Uri $uri -Headers @{"Metadata"="True"}
+    $result = Invoke-RestMethod -Method GET -NoProxy -Uri $uri -Headers @{"Metadata"="True"}
     return $result
 }
 
 function Query-AttestedEndpoint
 {
     $uri = $AttestedEndpoint + "?api-version=2019-03-11&nonce=" + $NonceValue
-    $result = Invoke-RestMethod -Method GET -Uri $uri -Headers @{"Metadata"="True"}
+    $result = Invoke-RestMethod -Method GET -NoProxy -Uri $uri -Headers @{"Metadata"="True"}
     return $result
 }
 
