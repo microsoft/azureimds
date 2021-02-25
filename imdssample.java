@@ -124,7 +124,7 @@ public class IMDSSample
         try
         {
             URL url = new URL(imdsUrl);
-            HttpURLConnection con = (HttpURLConnection) url.openConnection();
+            HttpURLConnection con = (HttpURLConnection) url.openConnection(Proxy.NO_PROXY);
             con.setRequestMethod("GET");
             con.setRequestProperty("Metadata", "True");
             con.set
