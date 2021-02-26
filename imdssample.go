@@ -7,16 +7,12 @@ import (
 )
 
 func main() {
-    var PTransport = &http.Transport {
-        Proxy: nil
-    }
-        client: = &http.Client {
-        Transport: PTransport
-    }
+    var PTransport = & http.Transport { Proxy: nil }
+
+    client := http.Client { Transport: PTransport }
 
     req, _ := http.NewRequest("GET", "http://169.254.169.254/metadata/instance", nil)
     req.Header.Add("Metadata", "True")
-    req.Header.Add()
 
     q := req.URL.Query()
     q.Add("format", "json")
