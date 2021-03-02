@@ -117,7 +117,6 @@ namespace Samples
             using(var httpClient = new HttpClient())
             {
                 httpClient.DefaultRequestHeaders.Add("Metadata", "True");
-                httpClient.DefaultProxy = "*";
                 try
                 {
                     jsonResult = httpClient.GetStringAsync(imdsUri).Result;
