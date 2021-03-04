@@ -1,9 +1,10 @@
 sudo apt-get install curl
 sudo apt-get install jq
+# NOTE: Proxies must be bypassed using the --noproxy flag when calling Azure IMDS
 # Instance call
-curl -H Metadata:True "http://169.254.169.254/metadata/instance?api-version=2019-03-11&format=json" | jq .
+curl -H Metadata:True --noproxy "*" "http://169.254.169.254/metadata/instance?api-version=2019-03-11&format=json" | jq .
 # Make Attested call and extract signature
-curl  --silent -H Metadata:True http://169.254.169.254/metadata/attested/document?api-version=2019-03-11 | jq -r '.["signature"]' > signature
+curl  --silent -H Metadata:True --noproxy "*" http://169.254.169.254/metadata/attested/document?api-version=2019-03-11 | jq -r '.["signature"]' > signature
 # Decode the signature
 base64 -d signature > decodedsignature
 #Get PKCS7 format
