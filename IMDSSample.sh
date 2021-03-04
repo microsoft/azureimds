@@ -1,5 +1,6 @@
 sudo apt-get install curl
 sudo apt-get install jq
+# NOTE: Proxies must be bypassed using the --noproxy flag when calling Azure IMDS
 # Instance call
 curl -H Metadata:True --noproxy "*" "http://169.254.169.254/metadata/instance?api-version=2019-03-11&format=json" | jq .
 # Make Attested call and extract signature
