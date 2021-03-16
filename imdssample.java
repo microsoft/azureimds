@@ -22,7 +22,7 @@ import com.google.gson.Gson;
  */
 public class IMDSSample 
 {
-    public static final String ImdsServer = "http://127.0.0.1:90";
+    public static final String ImdsServer = "http://169.254.169.254";
     public static final String InstanceEndpoint = ImdsServer + "/metadata/instance";
     public static final String AttestedEndpoint = ImdsServer + "/metadata/attested/document";
     public static final String NonceValue = "123456";
@@ -124,7 +124,7 @@ public class IMDSSample
         try
         {
             URL url = new URL(imdsUrl);
-            HttpURLConnection con = (HttpURLConnection) url.openConnection(Proxy.NO_PROXY);
+            HttpURLConnection con = (HttpURLConnection) url.openConnection();
             con.setRequestMethod("GET");
             con.setRequestProperty("Metadata", "True");
             BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
