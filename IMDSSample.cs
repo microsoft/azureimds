@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
@@ -116,6 +117,9 @@ namespace Samples
             string jsonResult = string.Empty;
             using(var httpClient = new HttpClient())
             {
+                // IMDS requires bypassing proxies.
+                WebProxy proxy = new WebProxy();
+                HttpClient.DefaultProxy = proxy;
                 httpClient.DefaultRequestHeaders.Add("Metadata", "True");
                 try
                 {
