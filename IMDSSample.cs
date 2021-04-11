@@ -7,6 +7,7 @@ using System.Runtime.Serialization.Json;
 using System.Security.Cryptography;
 using System.Security.Cryptography.Pkcs;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
 
 namespace Samples
 {
@@ -17,14 +18,14 @@ namespace Samples
         const string AttestedEndpoint = ImdsServer + "/metadata/attested/document";
         const string NonceValue = "123456";
 
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             // Query /instance metadata
             var result = QueryInstanceEndpoint();
             ParseInstanceResponse(result);
 
             // Make Attested call and parse the response
-            result = QueryAttestedEndpoint();
+            result = await QueryAttestedEndpoint();
             ParseAttestedResponse(result);
         }
 
@@ -46,7 +47,7 @@ namespace Samples
                 X509Chain chain = new X509Chain();
                 chain.Build(cert);
                 // Print certificate chain information
-                foreach(X509ChainElement element in chain.ChainElements)
+                foreach (X509ChainElement element in chain.ChainElements)
                 {
                     Console.WriteLine("Element issuer: {0}", element.Certificate.Issuer);
                     Console.WriteLine("Element subject: {0}", element.Certificate.Subject);
@@ -57,7 +58,7 @@ namespace Samples
                     Console.WriteLine("Number of element extensions: {0}{1}", element.Certificate.Extensions.Count, Environment.NewLine);
                 }
             }
-            catch(CryptographicException ex)
+            catch (CryptographicException ex)
             {
                 Console.WriteLine("Exception: {0}", ex.ToString());
             }
@@ -70,15 +71,15 @@ namespace Samples
                 byte[] blob = Convert.FromBase64String(document.Signature);
                 SignedCms signedCms = new SignedCms();
                 signedCms.Decode(blob);
-                string result = System.Text.Encoding.UTF8.GetString(signedCms.ContentInfo.Content);
+                string result = Encoding.UTF8.GetString(signedCms.ContentInfo.Content);
                 Console.WriteLine("Attested data: {0}", result);
                 AttestedData data = SerializeObjectFromJsonString(typeof(AttestedData), result) as AttestedData;
-                if(data.Nonce.Equals(NonceValue))
+                if (data.Nonce.Equals(NonceValue))
                 {
                     Console.WriteLine("Nonce values match");
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine("Error checking signature blob: '{0}'", ex.Message);
             }
@@ -90,24 +91,24 @@ namespace Samples
             Console.WriteLine("Instance response: {0}{1}", response, Environment.NewLine);
         }
 
-        private static string QueryInstanceEndpoint()
+        private static Task<string> QueryInstanceEndpoint()
         {
             return QueryImds(InstanceEndpoint, "2019-03-11");
         }
 
-        private static string QueryAttestedEndpoint()
+        private static Task<string> QueryAttestedEndpoint()
         {
             string nonce = "nonce=" + NonceValue;
             return QueryImds(AttestedEndpoint, "2019-03-11", nonce);
         }
 
         // Query IMDS server and retrieve JSON result
-        private static string QueryImds(string path, string apiVersion)
+        private static Task<string> QueryImds(string path, string apiVersion)
         {
             return QueryImds(path, apiVersion, "");
         }
 
-        private static string QueryImds(string path, string apiVersion, string otherParams)
+        private static async Task<string> QueryImds(string path, string apiVersion, string otherParams)
         {
             string imdsUri = path + "?api-version=" + apiVersion;
             if(otherParams != null && !otherParams.Equals(string.Empty))
@@ -115,7 +116,7 @@ namespace Samples
                 imdsUri += "&" + otherParams;
             }
             string jsonResult = string.Empty;
-            using(var httpClient = new HttpClient())
+            using (var httpClient = new HttpClient())
             {
                 // IMDS requires bypassing proxies.
                 WebProxy proxy = new WebProxy();
@@ -123,9 +124,9 @@ namespace Samples
                 httpClient.DefaultRequestHeaders.Add("Metadata", "True");
                 try
                 {
-                    jsonResult = httpClient.GetStringAsync(imdsUri).Result;
+                    jsonResult = await httpClient.GetStringAsync(imdsUri);
                 }
-                catch(AggregateException ex)
+                catch (AggregateException ex)
                 {
                     // Handle response failures
                     Console.WriteLine("Request failed: " + ex.InnerException.Message);
@@ -137,12 +138,11 @@ namespace Samples
         private static object SerializeObjectFromJsonString(Type objectType, string json)
         {
             DataContractJsonSerializer jsonSerializer = new DataContractJsonSerializer(objectType);
-            using(MemoryStream memoryStream = new MemoryStream())
+            using (MemoryStream memoryStream = new MemoryStream())
+            using (StreamWriter writer = new StreamWriter(memoryStream)
             {
                 // Prepare stream
-                System.IO.StreamWriter writer = new StreamWriter(memoryStream);
                 writer.Write(json);
-                writer.Flush();
                 memoryStream.Position = 0;
                 // Serialize object
                 return jsonSerializer.ReadObject(memoryStream);
