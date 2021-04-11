@@ -32,7 +32,7 @@ namespace Samples
         private static void ParseAttestedResponse(string response)
         {
             Console.WriteLine("Parsing Attested response");
-            AttestedDocument document = SerializeObjectFromJsonString(typeof(AttestedDocument), response) as AttestedDocument;
+            AttestedDocument document = (AttestedDocument)SerializeObjectFromJsonString(typeof(AttestedDocument), response);
             ValidateCertificate(document);
             ValidateAttestedData(document);
         }
@@ -60,7 +60,7 @@ namespace Samples
             }
             catch (CryptographicException ex)
             {
-                Console.WriteLine("Exception: {0}", ex.ToString());
+                Console.WriteLine("Exception: {0}", ex);
             }
         }
 
@@ -81,7 +81,7 @@ namespace Samples
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error checking signature blob: '{0}'", ex.Message);
+                Console.WriteLine("Error checking signature blob: '{0}'", ex);
             }
         }
 
@@ -129,7 +129,7 @@ namespace Samples
                 catch (AggregateException ex)
                 {
                     // Handle response failures
-                    Console.WriteLine("Request failed: " + ex.InnerException.Message);
+                    Console.WriteLine("Request failed: " + ex.GetBaseException());
                 }
             }
             return jsonResult;
