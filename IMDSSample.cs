@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -7,6 +7,7 @@ using System.Runtime.Serialization.Json;
 using System.Security.Cryptography;
 using System.Security.Cryptography.Pkcs;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Samples
@@ -21,7 +22,7 @@ namespace Samples
         static async Task Main(string[] args)
         {
             // Query /instance metadata
-            var result = QueryInstanceEndpoint();
+            var result = await QueryInstanceEndpoint();
             ParseInstanceResponse(result);
 
             // Make Attested call and parse the response
@@ -43,9 +44,11 @@ namespace Samples
             {
                 // Build certificate from response
                 X509Certificate2 cert = new X509Certificate2(System.Text.Encoding.UTF8.GetBytes(document.Signature));
+
                 // Build certificate chain
                 X509Chain chain = new X509Chain();
                 chain.Build(cert);
+
                 // Print certificate chain information
                 foreach (X509ChainElement element in chain.ChainElements)
                 {
@@ -111,7 +114,8 @@ namespace Samples
         private static async Task<string> QueryImds(string path, string apiVersion, string otherParams)
         {
             string imdsUri = path + "?api-version=" + apiVersion;
-            if(otherParams != null && !otherParams.Equals(string.Empty))
+            if (otherParams != null &&
+                !otherParams.Equals(string.Empty))
             {
                 imdsUri += "&" + otherParams;
             }
@@ -139,66 +143,65 @@ namespace Samples
         {
             DataContractJsonSerializer jsonSerializer = new DataContractJsonSerializer(objectType);
             using (MemoryStream memoryStream = new MemoryStream())
-            using (StreamWriter writer = new StreamWriter(memoryStream)
+            using (StreamWriter writer = new StreamWriter(memoryStream))
             {
                 // Prepare stream
                 writer.Write(json);
                 memoryStream.Position = 0;
+
                 // Serialize object
                 return jsonSerializer.ReadObject(memoryStream);
             }
         }
-    }
 
-    [DataContract]
-    public class AttestedDocument
-    {
-        [DataMember(Name = "encoding")]
-        public string Encoding { get; set; }
+        [DataContract]
+        public class AttestedDocument
+        {
+            [DataMember(Name = "encoding")]
+            public string Encoding { get; set; }
 
-        [DataMember(Name = "signature")]
-        public string Signature { get; set; }
-    }
+            [DataMember(Name = "signature")]
+            public string Signature { get; set; }
+        }
 
-    [DataContract]
-    public class AttestedData
-    {
-        [DataMember(Name = "nonce")]
-        public string Nonce { get; set; }
+        [DataContract]
+        public class AttestedData
+        {
+            [DataMember(Name = "nonce")]
+            public string Nonce { get; set; }
 
-        [DataMember(Name = "vmId")]
-        public string VmId { get; set; }
+            [DataMember(Name = "vmId")]
+            public string VmId { get; set; }
 
-        [DataMember(Name = "subscriptionId")]
-        public string SubscriptionId { get; set; }
+            [DataMember(Name = "subscriptionId")]
+            public string SubscriptionId { get; set; }
 
-        [DataMember(Name = "plan")]
-        public AttestedDataPlanInfo PlanInfo;
+            [DataMember(Name = "plan")] public AttestedDataPlanInfo PlanInfo;
 
-        [DataMember(Name = "timeStamp")]
-        public AttestedDataTimeStamp TimeStamp;
-    }
+            [DataMember(Name = "timeStamp")] public AttestedDataTimeStamp TimeStamp;
+        }
 
-    [DataContract]
-    public class AttestedDataPlanInfo
-    {
-        [DataMember(Name = "name")]
-        public string Name { get; set; }
+        [DataContract]
+        public class AttestedDataPlanInfo
+        {
+            [DataMember(Name = "name")]
+            public string Name { get; set; }
 
-        [DataMember(Name = "product")]
-        public string Product { get; set; }
+            [DataMember(Name = "product")]
+            public string Product { get; set; }
 
-        [DataMember(Name = "publisher")]
-        public string Publisher { get; set; }
-    }
+            [DataMember(Name = "publisher")]
+            public string Publisher { get; set; }
+        }
 
-    [DataContract]
-    public class AttestedDataTimeStamp
-    {
-        [DataMember(Name = "createdOn")]
-        public string CreatedDate { get; set; }
+        [DataContract]
+        public class AttestedDataTimeStamp
+        {
+            [DataMember(Name = "createdOn")]
+            public string CreatedDate { get; set; }
 
-        [DataMember(Name = "expiresOn")]
-        public string ExpiryDate { get; set; }
+            [DataMember(Name = "expiresOn")]
+            public string ExpiryDate { get; set; }
+        }
     }
 }
