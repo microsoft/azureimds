@@ -23,7 +23,7 @@ curl -H Metadata:true --noproxy "*" "http://169.254.169.254/metadata/instance/co
 
 ## How about custom data?
 
-User data offers the similar functionality to custom data, allowing you to pass your own metadata to the VM instance. The difference is, user data is retrieved through IMDS, and is persistent throughout the lifetime of the VM instance. Existing custom data feature will continue to work as described in this article<...>. However you can only get custom data through local system folder, not through IMDS.
+User data offers the similar functionality to custom data, allowing you to pass your own metadata to the VM instance. The difference is, user data is retrieved through IMDS, and is persistent throughout the lifetime of the VM instance. Existing custom data feature will continue to work as described in [this article](https://docs.microsoft.com/azure/virtual-machines/custom-data). However you can only get custom data through local system folder, not through IMDS.
 
 ## Deploy a Virtual Machine with UserData
 
