@@ -8,6 +8,8 @@ function JsonQueryIMDS(path, callback)
     imds_server = '169.254.169.254';
 
     result = ''  
+    // Set your node js environment variable in .env to bypass proxies.
+    // Aka NO_PROXY = "*"
     http.get({
         host: imds_server,
         path: '/metadata' + path + '?api-version=' + api_version,
