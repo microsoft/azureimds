@@ -3,17 +3,32 @@ $InstanceEndpoint = $ImdsServer + "/metadata/instance"
 $AttestedEndpoint = $ImdsServer + "/metadata/attested/document"
 $NonceValue = "123456"
 
+# Use of -NoProxy requires use of PowerShell V6 or greater. If you use an older version of PowerShell,
+# consider using examples like:
+#
+# $request = [System.Net.WebRequest]::Create("http://169.254.169.254/metadata/instance?api-version=2019-02-01")
+# $request.Proxy = [System.Net.WebProxy]::new()
+# $request.Headers.Add("Metadata","True")
+# $request.GetResponse()
+#
+# or:
+#
+# $Proxy=New-object System.Net.WebProxy
+# $WebSession=new-object Microsoft.PowerShell.Commands.WebRequestSession
+# $WebSession.Proxy=$Proxy
+# Invoke-RestMethod -Headers @{"Metadata"="true"} -Method GET -Uri "http://169.254.169.254/metadata/instance?api-version=2021-02-01" -WebSession $WebSession
+
 function Query-InstanceEndpoint
 {
     $uri = $InstanceEndpoint + "?api-version=2019-03-11"
-    $result = Invoke-RestMethod -Method GET -Proxy $Null -Uri $uri -Headers @{"Metadata"="True"}
+    $result = Invoke-RestMethod -Method GET -NoProxy -Uri $uri -Headers @{"Metadata"="True"}
     return $result
 }
 
 function Query-AttestedEndpoint
 {
     $uri = $AttestedEndpoint + "?api-version=2019-03-11&nonce=" + $NonceValue
-    $result = Invoke-RestMethod -Method GET -Proxy $Null -Uri $uri -Headers @{"Metadata"="True"}
+    $result = Invoke-RestMethod -Method GET -NoProxy -Uri $uri -Headers @{"Metadata"="True"}
     return $result
 }
 
