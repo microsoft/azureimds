@@ -12,7 +12,7 @@ openssl pkcs7 -in decodedsignature -inform DER -out sign.pk7
 # Get Public key out of pkc7
 openssl pkcs7 -in decodedsignature -inform DER  -print_certs -out signer.pem
 #Get the intermediate certificate
-wget -q -O intermediate.cer "$(openssl x509 -in signer.pem -text -noout | grep " CA Issuers -" | awk -FURI: '{print $2}')"
+curl -so intermediate.cer "$(openssl x509 -in signer.pem -text -noout | grep " CA Issuers -" | awk -FURI: '{print $2}')"
 openssl x509 -inform der -in intermediate.cer -out intermediate.pem
 #Verify the contents
 openssl smime -verify -in sign.pk7 -inform pem -noverify
