@@ -5,7 +5,7 @@ Imports Newtonsoft.Json
 Module Module1
 
     Sub Main()
-        Dim request As HttpWebRequest = WebRequest.Create("http://169.254.169.254/metadata/instance?api-version=2019-03-11")
+        Dim request As HttpWebRequest = WebRequest.Create("http://169.254.169.254/metadata/instance?api-version=2021-02-01")
         ' IMDS requires proxies to be bypassed
         Dim proxy As New WebProxy()
         request.Headers.Add("Metadata: True")
