@@ -28,4 +28,6 @@ openssl x509 -noout -subject -in intermediate.pem
 openssl x509 -noout -issuer -in intermediate.pem
 echo "Certificate chain "
 # Verify the certificate chain
-openssl verify -verbose -CAfile /etc/ssl/certs/Baltimore_CyberTrust_Root.pem -untrusted intermediate.pem signer.pem
+#If either statement returns ok, then the cert is ok
+openssl verify -verbose -CAfile /etc/ssl/certs/DigiCert_Global_Root.pem -untrusted intermediate.pem signer.pem
+openssl verify -verbose -CAfile /etc/ssl/certs/Baltimore_CyberTrust_Root.pem -untrusted intermediate.pem signer.pem # This is our old authority. Either is allowed
