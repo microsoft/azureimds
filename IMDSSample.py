@@ -91,7 +91,7 @@ def validate_attested_cert(attested_signature):
         "openssl x509 -inform der -in intermediate.cer -out intermediate.pem", shell=True)
 
     # We, finally, verify the complete cert chain.
-    # DigiCert_Global_Root is our new authority. Both should be trusted
+    # DigiCert_Global_Root is our new authority. Both should be trusted for now, but Baltimore is deprecated and can eventually be removed from the check.
     # If either statement returns ok then the cert is accepted
     subprocess.call(
         "openssl verify -verbose -CAfile /etc/ssl/certs/DigiCert_Global_Root.pem -untrusted intermediate.pem signer.pem", shell=True)
