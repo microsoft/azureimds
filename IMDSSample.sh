@@ -30,4 +30,4 @@ echo "Certificate chain "
 # Verify the certificate chain
 #If either statement returns ok, then the cert is ok
 openssl verify -verbose -CAfile /etc/ssl/certs/DigiCert_Global_Root.pem -untrusted intermediate.pem signer.pem
-openssl verify -verbose -CAfile /etc/ssl/certs/Baltimore_CyberTrust_Root.pem -untrusted intermediate.pem signer.pem # This is our old authority. Either is allowed
+openssl verify -verbose -CAfile /etc/ssl/certs/Baltimore_CyberTrust_Root.pem -untrusted intermediate.pem signer.pem # This is our old authority. Either is allowed, but Baltimore is deprecated.
