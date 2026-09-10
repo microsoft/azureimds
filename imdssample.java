@@ -1,17 +1,37 @@
 package com.microsoft.azure.imds.samples;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.Proxy;
 import java.net.URL;
-import java.security.cert.CertificateFactory;
+import java.nio.charset.StandardCharsets;
+import java.security.KeyStore;
+import java.security.cert.CertPathBuilder;
+import java.security.cert.CertStore;
+import java.security.cert.CollectionCertStoreParameters;
+import java.security.cert.PKIXCertPathBuilderResult;
+import java.security.cert.PKIXBuilderParameters;
+import java.security.cert.TrustAnchor;
+import java.security.cert.X509CertSelector;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
-import javax.security.auth.x500.X500Principal;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
+import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cms.CMSSignedData;
 import org.bouncycastle.cms.CMSTypedData;
+import org.bouncycastle.cms.SignerInformation;
+import org.bouncycastle.cms.SignerInformationStore;
+import org.bouncycastle.cms.jcajce.JcaSimpleSignerInfoVerifierBuilder;
+import org.bouncycastle.util.Store;
 import org.bouncycastle.util.encoders.Base64;
 import com.google.gson.Gson;
 
@@ -22,6 +42,8 @@ import com.google.gson.Gson;
  */
 public class IMDSSample 
 {
+    private static final int DnsSubjectAlternativeNameType = 2;
+    private static final String MetadataDnsSuffix = ".metadata.azure.com";
     public static final String ImdsServer = "http://169.254.169.254";
     public static final String InstanceEndpoint = ImdsServer + "/metadata/instance";
     public static final String AttestedEndpoint = ImdsServer + "/metadata/attested/document";
@@ -48,32 +70,7 @@ public class IMDSSample
         System.out.println("Parsing Attested response");
         AttestedDocument document = new Gson().fromJson(response, AttestedDocument.class);
         byte[] decoded = Base64.decode(document.signature);
-        ValidateCertificate(decoded);
         ValidateAttestedData(decoded);
-    }
-    
-    private static void ValidateCertificate(byte[] decoded)
-    {
-        try
-        {
-            CertificateFactory factory =  CertificateFactory.getInstance("X.509");
-            Collection certs = factory.generateCertificates(new ByteArrayInputStream(decoded));
-            Iterator it = certs.iterator();
-            while(it.hasNext())
-            {
-                X509Certificate cert = (X509Certificate)it.next();
-                cert.checkValidity();
-                X500Principal issuer = cert.getIssuerX500Principal();
-                System.out.println("Issuer: " + issuer.toString());
-                X500Principal subject = cert.getSubjectX500Principal();
-                System.out.println("Subject: " + subject.toString());
-                System.out.println("Valid until: " + cert.getNotAfter().toString());
-            }
-        }
-        catch(Exception ex)
-        {
-            System.out.println("Exception validating certificate: " + ex.getMessage());
-        }
     }
     
     private static void ValidateAttestedData(byte[] decoded)
@@ -81,20 +78,127 @@ public class IMDSSample
         try
         {
             CMSSignedData signature = new CMSSignedData(decoded);
-            CMSTypedData signedData = signature.getSignedContent();
-            String signedDataString = new String((byte[])signedData.getContent());
-            System.out.println("Attested data: " + signedDataString);
-            AttestedData data = new Gson().fromJson(signedDataString, AttestedData.class);
-            if(data.nonce.compareTo(NonceValue) == 0)
+            Store<X509CertificateHolder> certificateStore = signature.getCertificates();
+            SignerInformationStore signerStore = signature.getSignerInfos();
+            Collection<SignerInformation> signers = signerStore.getSigners();
+            if(signers.size() != 1)
             {
-                System.out.println("Nonce values match");
+                throw new SecurityException("Expected exactly one attested-document signer");
             }
+
+            SignerInformation signer = signers.iterator().next();
+            Collection<X509CertificateHolder> signerCertificates = certificateStore.getMatches(signer.getSID());
+            if(signerCertificates.size() != 1)
+            {
+                throw new SecurityException("Unable to identify the attested-document signer certificate");
+            }
+
+            JcaX509CertificateConverter converter = new JcaX509CertificateConverter();
+            X509Certificate signerCertificate = converter.getCertificate(signerCertificates.iterator().next());
+            ValidateMetadataIdentity(signerCertificate);
+            PKIXCertPathBuilderResult certificatePath = ValidateCertificatePath(
+                signerCertificate, certificateStore, converter);
+            if(!signer.verify(new JcaSimpleSignerInfoVerifierBuilder().build(signerCertificate)))
+            {
+                throw new SecurityException("Invalid attested-document signature");
+            }
+
+            PrintCertificatePath(certificatePath);
+
+            CMSTypedData signedData = signature.getSignedContent();
+            if(signedData == null || !(signedData.getContent() instanceof byte[]))
+            {
+                throw new SecurityException("Attested document does not contain signed data");
+            }
+
+            String signedDataString = new String((byte[])signedData.getContent(), StandardCharsets.UTF_8);
+            AttestedData data = new Gson().fromJson(signedDataString, AttestedData.class);
+            if(data == null || !NonceValue.equals(data.nonce))
+            {
+                throw new SecurityException("Attested-document nonce does not match the request");
+            }
+
+            System.out.println("Attested data: " + signedDataString);
+            System.out.println("Nonce values match");
 			// You should also verify the plan and subscription information
         }
         catch(Exception ex)
         {
-            System.out.println("Exception validating data: " + ex.getMessage());
+            throw new SecurityException("Attested-document validation failed", ex);
         }
+    }
+
+    private static void ValidateMetadataIdentity(X509Certificate certificate) throws Exception
+    {
+        Collection<List<?>> subjectAlternativeNames = certificate.getSubjectAlternativeNames();
+        if(subjectAlternativeNames != null)
+        {
+            for(List<?> subjectAlternativeName : subjectAlternativeNames)
+            {
+                if(Integer.valueOf(DnsSubjectAlternativeNameType).equals(subjectAlternativeName.get(0)))
+                {
+                    String dnsName = subjectAlternativeName.get(1).toString().toLowerCase(Locale.ROOT);
+                    if(dnsName.equals(MetadataDnsSuffix.substring(1)) || dnsName.endsWith(MetadataDnsSuffix))
+                    {
+                        return;
+                    }
+                }
+            }
+        }
+
+        throw new SecurityException("Signer certificate is not valid for Azure IMDS");
+    }
+
+    private static void PrintCertificatePath(PKIXCertPathBuilderResult certificatePath)
+    {
+        for(java.security.cert.Certificate pathCertificate : certificatePath.getCertPath().getCertificates())
+        {
+            PrintCertificate((X509Certificate)pathCertificate);
+        }
+
+        PrintCertificate(certificatePath.getTrustAnchor().getTrustedCert());
+    }
+
+    private static void PrintCertificate(X509Certificate certificate)
+    {
+        System.out.println("Issuer: " + certificate.getIssuerX500Principal().toString());
+        System.out.println("Subject: " + certificate.getSubjectX500Principal().toString());
+        System.out.println("Valid until: " + certificate.getNotAfter().toString());
+    }
+
+    private static PKIXCertPathBuilderResult ValidateCertificatePath(
+        X509Certificate signerCertificate,
+        Store<X509CertificateHolder> certificateStore,
+        JcaX509CertificateConverter converter) throws Exception
+    {
+        List<X509Certificate> certificates = new ArrayList<X509Certificate>();
+        for(X509CertificateHolder certificateHolder : certificateStore.getMatches(null))
+        {
+            certificates.add(converter.getCertificate(certificateHolder));
+        }
+
+        Set<TrustAnchor> trustAnchors = new HashSet<TrustAnchor>();
+        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(
+            TrustManagerFactory.getDefaultAlgorithm());
+        trustManagerFactory.init((KeyStore)null);
+        for(TrustManager trustManager : trustManagerFactory.getTrustManagers())
+        {
+            if(trustManager instanceof X509TrustManager)
+            {
+                for(X509Certificate acceptedIssuer : ((X509TrustManager)trustManager).getAcceptedIssuers())
+                {
+                    trustAnchors.add(new TrustAnchor(acceptedIssuer, null));
+                }
+            }
+        }
+
+        X509CertSelector signerSelector = new X509CertSelector();
+        signerSelector.setCertificate(signerCertificate);
+        PKIXBuilderParameters parameters = new PKIXBuilderParameters(trustAnchors, signerSelector);
+        parameters.addCertStore(CertStore.getInstance(
+            "Collection", new CollectionCertStoreParameters(certificates)));
+        parameters.setRevocationEnabled(true);
+        return (PKIXCertPathBuilderResult)CertPathBuilder.getInstance("PKIX").build(parameters);
     }
     
     private static String QueryInstanceEndpoint()
